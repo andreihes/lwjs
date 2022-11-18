@@ -1,9 +1,6 @@
 import lwjs.bone as bone
 import lwjs.util as util
 
-RSF = bone.Raw | bone.Sub | bone.Fun
-PAQ = bone.Pin | bone.Arg | bone.Quo
-
 def chop(line: str) -> bone.Pin:
   pin = bone.Pin()
   start, index = 0, 0
@@ -28,7 +25,7 @@ def chop(line: str) -> bone.Pin:
   # finally pin holds AST for the line
   return pin
 
-def chop_dlr(line: str, begin: int) -> tuple[RSF, int]:
+def chop_dlr(line: str, begin: int) -> tuple[util.RSF, int]:
   # begin is on a confirmed '$' sequence
   next = line[begin + 1:begin + 2]
 
@@ -119,7 +116,7 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
   # unbalanced fun
   raise util.BadChop('Unbalanced "$("', line, begin)
 
-def chop_quote(paq: PAQ, line: str, begin: int) -> tuple[PAQ, int]:
+def chop_quote(paq: util.PAQ, line: str, begin: int) -> tuple[util.PAQ, int]:
   # begin is on a confirmed "'" sequence inside of fun or sub
   start = index = begin + 1
   while index < len(line) and (curr := line[index]):
@@ -146,7 +143,7 @@ def chop_quote(paq: PAQ, line: str, begin: int) -> tuple[PAQ, int]:
   # unexpected end of input
   raise util.BadChop('Unbalanced "\'"', line, begin)
 
-def chop_plain(paq: PAQ, line: str, begin: int, seps: str) -> tuple[PAQ, int]:
+def chop_plain(paq: util.PAQ, line: str, begin: int, seps: str) -> tuple[util.PAQ, int]:
   # begin is on a confirmed non-"'" sequence inside of fun or sub
   start = index = begin
   while index < len(line) and (curr := line[index]):
