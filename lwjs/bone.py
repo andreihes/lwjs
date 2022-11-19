@@ -22,5 +22,6 @@ class Sub(Dot):
     self.Sub: Kit = sub
 
 class Fun(Dot):
-  def __init__(self, fun: Kit):
-    self.Fun: Kit = fun
+  def __init__(self, name: Pin, args: Kit):
+    self.Name: Pin = name
+    self.Args: Kit = args

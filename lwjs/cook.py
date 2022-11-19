@@ -24,7 +24,8 @@ def cook_str(obj: str, ctx: util.Context):
   data = roast(obj, ctx)
   if isinstance(data, str):
     ctx.Hits[id(data)] = data
-  # TODO: cook further if an object
+  else:
+    data = cook_deep(data, ctx)
   return data
 
 def cook_map(obj: typing.MutableMapping, ctx: util.Context):
@@ -55,7 +56,7 @@ def roast_deep(dot: bone.Dot, ctx: util.Context):
   if isinstance(dot, bone.Kit):
     return roast_kit(dot, ctx)
   if isinstance(dot, bone.Raw):
-    return roast_raw(dot, ctx)
+    return dot.Raw
   if isinstance(dot, bone.Sub):
     return roast_sub(dot, ctx)
   if isinstance(dot, bone.Fun):
@@ -79,16 +80,30 @@ def roast_paq(paq: bone.Pin|bone.Arg|bone.Quo, ctx: util.Context):
 def roast_kit(kit: bone.Kit, ctx: util.Context):
   return [ roast_paq(paq, ctx) for paq in kit ]
 
-def roast_raw(raw: bone.Raw, ctx: util.Context):
-  return raw.Raw
-
 def roast_sub(sub: bone.Sub, ctx: util.Context):
-  path = roast_kit(sub.Sub, ctx)
-  # TODO: check circular refs
-  # TODO: implement actual path travel
-  return f'["{path}"]'
+  here = ctx.Root
+  for key in roast_kit(sub.Sub, ctx):
+    # TODO: keep updating ctx.Path properly
+    # TODO: check key exist and raise with ctx.Path if not
+    if isinstance(here, typing.MutableSequence):
+      key = int(key)
+      val = here[key]
+      if isinstance(val, str):
+        val = cook_str(val, ctx)
+        here[key] = val
+      here = here[key]
+    elif isinstance(here, typing.MutableMapping):
+      val = here[key]
+      if isinstance(val, str):
+        val = cook_str(val, ctx)
+        here[key] = val
+      here = here[key]
+    else:
+      raise TypeError()
+  return here
 
 def roast_fun(fun: bone.Fun, ctx: util.Context):
-  narg = roast_kit(fun.Fun, ctx)
-  func = util.func(narg[0])
-  return func(*narg[1:])
+  name = roast_paq(fun.Name, ctx)
+  args = roast_kit(fun.Args, ctx)
+  func = util.func(name)
+  return func(*args)

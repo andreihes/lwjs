@@ -86,32 +86,31 @@ def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
 
 def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
   # begin is on a confirmed '$(' sequence
-  kit, index = bone.Kit(), begin + 2
+  name, args, index = bone.Pin(), bone.Kit(), begin + 2
   while index < len(line) and (curr := line[index]):
     # verify name is not empty and done
     if curr == ')':
-      if len(kit) == 0:
-        raise util.BadChop('Empty "$()"', line, begin)
-      return bone.Fun(kit), index + 1
+      if name:
+        return bone.Fun(name, args), index + 1
+      raise util.BadChop('Empty "$()"', line, begin)
 
-    # skip whitespace and continue
+    # skip whitespace
     if curr == ' ':
       index += 1
       continue
 
-    # no ')' and no ' ' starts a new pin
-    # it is pin for the function name
-    # it is quo for a quoted function argument
-    # it is arg for a non-quoted argument
-    # the context preserved for basic type
-    # conversions of the function args
-    if curr == "'":
-      paq = bone.Pin() if len(kit) == 0 else bone.Quo()
-      paq, index = chop_quote(paq, line, index)
+    # init name or collect args
+    if len(name) == 0:
+      if curr == "'":
+        paq, index = chop_quote(name, line, index)
+      else:
+        paq, index = chop_plain(name, line, index, ' )')
     else:
-      paq = bone.Pin() if len(kit) == 0 else bone.Arg()
-      paq, index = chop_plain(paq, line, index, ' )')
-    kit.append(paq)
+      if curr == "'":
+        paq, index = chop_quote(bone.Pin(), line, index)
+      else:
+        paq, index = chop_plain(bone.Pin(), line, index, ' )')
+      args.append(paq)
 
   # unbalanced fun
   raise util.BadChop('Unbalanced "$("', line, begin)
