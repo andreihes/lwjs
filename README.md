@@ -1,5 +1,5 @@
 # lwjs
-**LightWeight JSON Shell** is a module to allow simple inline like-in-bash-shell expressions in your JSON documents. Technically, no limits exist to apply on Python objects as well.
+**LightWeight JSON Shell** is a module (TODO: or a package) to allow simple inline like-in-bash-shell expressions in your JSON documents. Technically, no limits exist to apply on Python objects as well.
 
 # installation
 TODO
