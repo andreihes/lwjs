@@ -1,3 +1,5 @@
+''' AST '''
+
 class Dot:
   pass
 
@@ -10,7 +12,9 @@ class Arg(Dot, list[Dot]):
 class Quo(Dot, list[Dot]):
   pass
 
-class Kit(Dot, list[Pin|Arg|Quo]):
+PAQ = Pin | Arg | Quo
+
+class Kit(Dot, list[PAQ]):
   pass
 
 class Raw(Dot):
@@ -25,3 +29,5 @@ class Fun(Dot):
   def __init__(self, name: Pin, args: Kit):
     self.Name: Pin = name
     self.Args: Kit = args
+
+RSF = Raw | Sub | Fun

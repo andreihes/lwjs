@@ -1,7 +1,6 @@
 import pytest
-import datetime
 
-import lwjs.cook as cook
+import lwjs.core.cook as cook
 
 @pytest.mark.parametrize(
   ['v', 't', 'e'],

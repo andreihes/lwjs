@@ -1,8 +1,9 @@
 import pytest
 
-import lwjs.bone as bone
-import lwjs.chop as chop
-import lwjs.util as util
+import lwjs.core.chop as chop
+import lwjs.core.cook as cook
+import lwjs.core.bone as bone
+import lwjs.core.util as util
 
 def test_empty():
   pins = chop.chop('')
