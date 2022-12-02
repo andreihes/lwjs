@@ -1,7 +1,6 @@
 import pytest
 
 import lwjs.core.chop as chop
-import lwjs.core.cook as cook
 import lwjs.core.bone as bone
 import lwjs.core.help as help
 

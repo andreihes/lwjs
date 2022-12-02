@@ -1,6 +1,6 @@
 import pytest
 
-import lwjs
+import lwjs.core.cook as cook
 
 @pytest.mark.parametrize(
   ['d', 'r'],
@@ -18,6 +18,6 @@ import lwjs
 )
 def test_date(d, r):
   s = '$(date ' + d + ')'
-  v = lwjs.cook(s)
+  v = cook.cook(s)
   if r is not None:
     assert v == r
