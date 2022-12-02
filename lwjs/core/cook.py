@@ -88,7 +88,24 @@ def roast_sub(sub: bone.Sub, aid: help.Aide) -> help.ANY:
     raise help.BadCook('Circular ref', aid.Path, f'${{{".".join(path)}}}')
   aid.Crcs.append(path)
   for idx, key in enumerate(path):
-    key = navigate(here, idx, key, aid)
+    # check if we can navigate
+    if isinstance(here, help.SEQ):
+      try:
+        key = int(key)
+      except Exception as e:
+        msg = f'Expected "int" at sub[{idx}]. Got "{key}"'
+        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}') from e
+      if key < 0 or key >= len(here):
+        msg = f'Index "{key}" at sub[{idx}] is out of bounds'
+        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
+    elif isinstance(here, help.MAP):
+      if key not in here:
+        msg = f'Missing key "{key}" at sub[{idx}]'
+        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
+    else:
+      msg = f'Bad type "{type(here).__name__}" at sub[{idx}]'
+      raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
+    # navigate
     val = here[key]
     if isinstance(val, str):
       val = cook_str(val, aid)
@@ -96,28 +113,6 @@ def roast_sub(sub: bone.Sub, aid: help.Aide) -> help.ANY:
     here = here[key]
   aid.Crcs.pop()
   return here
-
-def navigate(obj: help.ANY, idx: int, key: str, aid: help.Aide) -> str|int:
-  # expect a valid int index for SEQ
-  if isinstance(obj, help.SEQ):
-    try:
-      ikey = int(key)
-    except Exception as e:
-      msg = f'Expected "int" at sub[{idx}]. Got "{key}"'
-      raise help.BadCook(msg, aid.Path, key) from e
-    if ikey < 0 or ikey >= len(obj):
-      msg = f'Index "{key}" at sub[{idx}] is out of bounds'
-      raise help.BadCook(msg, aid.Path, 'TODO:')
-    return ikey
-  # expect a valid str key for MAP
-  if isinstance(obj, help.MAP):
-    if key not in obj:
-      msg = f'Missing key "{key}" at sub[{idx}]'
-      raise help.BadCook(msg, aid.Path, 'TODO:')
-    return key
-  # other types are not supported
-  msg = f'Bad type "{type(obj).__name__}" at sub[{idx}]'
-  raise help.BadCook(msg, aid.Path, 'TODO:')
 
 def roast_fun(fun: bone.Fun, aid: help.Aide) -> help.ANY:
   name = roast_paq(fun.Name, aid)

@@ -18,20 +18,6 @@ class Aid:
     self.Refs: dict[str, str] = { }
     self.Crcs: list[list[str]] = [ ]
 
-def navi(aid: Aid, path: list[str|int]) -> ANY:
-  obj = aid.Root
-  for key in path:
-    if isinstance(obj, MAP):
-      key = str(key)
-      obj = obj[key]
-      continue
-    if isinstance(obj, SEQ):
-      key = int(key)
-      obj = obj[key]
-      continue
-    raise TypeError(f'Bad navi type "{type(obj).__name__}"')
-  return obj
-
 def func(aid: Aid, name: str) -> FUN:
   pair = name.split('.')
   if len(pair) == 1:
@@ -83,13 +69,9 @@ def any2str(aid: Aid, obj: None|ANY) -> str:
 class Aide(Aid):
   def __init__(self, obj: ANY) -> None:
     super().__init__(obj)
-    self._navi: FUN[[Aid, list[str|int]], ANY] = navi
     self._func: FUN[[Aid, str], FUN] = func
     self._str2any: FUN[[Aid, None|str], ANY] = str2any
     self._any2str: FUN[[Aid, None|ANY], str] = any2str
-
-  def navi(self, path: list[str|int]) -> ANY:
-    return self._navi(self, path)
 
   @functools.cache
   def func(self, name: str) -> FUN:
@@ -100,9 +82,6 @@ class Aide(Aid):
 
   def any2str(self, obj: None|ANY) -> str:
     return self._any2str(self, obj)
-
-  def set_navi(self, navi: FUN[[Aid, list[str|int]], ANY]) -> None:
-    self._navi = navi
 
   def set_func(self, func: FUN[[Aid, str], FUN]) -> None:
     self._func = func

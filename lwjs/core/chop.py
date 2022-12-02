@@ -81,7 +81,7 @@ def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
       continue
 
     # any other sequence is unexpected here
-    raise help.BadChop('Looks like a bug', line, index)
+    raise help.Bugster()
 
   # unbalanced sub
   raise help.BadChop('Unbalanced "${"', line, begin)
