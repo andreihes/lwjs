@@ -40,7 +40,7 @@ def cook_map(obj: help.MAP, aid: help.Aide) -> help.MAP:
 
 def cook_seq(obj: help.SEQ, aid: help.Aide) -> help.SEQ:
   for idx, val in enumerate(obj):
-    aid.Path.append(str(idx))
+    aid.Path.append(val)
     obj[idx] = cook_deep(val, aid)
     aid.Path.pop()
   return obj
