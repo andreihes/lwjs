@@ -93,8 +93,8 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
     # verify name is not empty and done
     if curr == ')':
       if len(name) == 0:
-        return bone.Fun(name, args), index + 1
-      raise help.BadChop('Empty "$()"', line, begin)
+        raise help.BadChop('Empty "$()"', line, begin)
+      return bone.Fun(name, args), index + 1
 
     # skip whitespace
     if curr == ' ':
