@@ -49,9 +49,9 @@ def str2any(aid: Aid, obj: None|str) -> ANY:
     return True
   if re.match(r'^\s*false\s*$', obj, re.IGNORECASE):
     return False
-  if re.match(r'^\s*[+\-]?[0-9]+\s*$', obj):
+  if re.match(r'^\s*[+\-]?[0-9_]+\s*$', obj):
     return int(obj)
-  if re.match(r'^\s*[+\-]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)\s*$', obj):
+  if re.match(r'^\s*[+\-]?([0-9_]+\.[0-9_]*|[0-9_]*\.[0-9_]+)\s*$', obj):
     return float(obj)
   return obj
 
