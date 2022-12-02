@@ -68,7 +68,10 @@ def roast_deep(dot: bone.Dot, aid: help.Aide) -> help.ANY:
 def roast_paq(paq: bone.PAQ, aid: help.Aide) -> help.ANY:
   if len(paq) == 1:
     data = roast_deep(paq[0], aid)
-    return aid.str2any(data) if isinstance(paq, bone.Arg) else data
+    if isinstance(paq, bone.Arg):
+      if isinstance(data, str):
+        data = aid.str2any(data)
+    return data
   line = ''
   for dot in paq:
     data = roast_deep(dot, aid)
