@@ -3,7 +3,7 @@ import pytest
 import lwjs.core.chop as chop
 import lwjs.core.cook as cook
 import lwjs.core.bone as bone
-import lwjs.core.util as util
+import lwjs.core.help as help
 
 def test_empty():
   pins = chop.chop('')
@@ -21,7 +21,7 @@ def test_pass_raws(line):
     outs += pin.Raw.replace('$', '$$')
   assert outs == line
 
-@pytest.mark.xfail(raises = util.BadChop, strict = True)
+@pytest.mark.xfail(raises = help.BadChop, strict = True)
 @pytest.mark.parametrize('line', ['$', '$abc', 'abc$', 'a$$$b', 'abc $$$$$ xyz'])
 def test_fail_raws(line):
   outs = ''

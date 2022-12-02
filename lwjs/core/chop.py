@@ -1,7 +1,7 @@
 ''' Build AST '''
 
 import lwjs.core.bone as bone
-import lwjs.core.util as util
+import lwjs.core.help as help
 
 def chop(line: str) -> bone.Pin:
   pin = bone.Pin()
@@ -44,7 +44,7 @@ def chop_dlr(line: str, begin: int) -> tuple[bone.RSF, int]:
     return chop_fun(line, begin)
 
   # any other sequence means orphan '$'
-  raise util.BadChop('Orphan "$"', line, begin)
+  raise help.BadChop('Orphan "$"', line, begin)
 
 def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
   # begin is on a confirmed '${' sequence
@@ -81,10 +81,10 @@ def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
       continue
 
     # any other sequence is unexpected here
-    raise util.BadChop('Looks like a bug', line, index)
+    raise help.BadChop('Looks like a bug', line, index)
 
   # unbalanced sub
-  raise util.BadChop('Unbalanced "${"', line, begin)
+  raise help.BadChop('Unbalanced "${"', line, begin)
 
 def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
   # begin is on a confirmed '$(' sequence
@@ -94,7 +94,7 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
     if curr == ')':
       if name:
         return bone.Fun(name, args), index + 1
-      raise util.BadChop('Empty "$()"', line, begin)
+      raise help.BadChop('Empty "$()"', line, begin)
 
     # skip whitespace
     if curr == ' ':
@@ -115,7 +115,7 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
       args.append(paq)
 
   # unbalanced fun
-  raise util.BadChop('Unbalanced "$("', line, begin)
+  raise help.BadChop('Unbalanced "$("', line, begin)
 
 def chop_quote(paq: bone.PAQ, line: str, begin: int) -> tuple[bone.PAQ, int]:
   # begin is on a confirmed "'" sequence inside of fun or sub
@@ -142,7 +142,7 @@ def chop_quote(paq: bone.PAQ, line: str, begin: int) -> tuple[bone.PAQ, int]:
       index += 1
 
   # unexpected end of input
-  raise util.BadChop('Unbalanced "\'"', line, begin)
+  raise help.BadChop('Unbalanced "\'"', line, begin)
 
 def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str) -> tuple[bone.PAQ, int]:
   # begin is on a confirmed non-"'" sequence inside of fun or sub
@@ -162,4 +162,4 @@ def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str) -> tuple[bone.PA
       index += 1
 
   # unexpected end of input
-  raise util.BadChop('Unbalanced "{sep}"', line, begin)
+  raise help.BadChop('Unbalanced "{sep}"', line, begin)

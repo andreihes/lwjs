@@ -1,8 +1,26 @@
+'''
+Calculate date from the str expression (each arg concatenated as str).
+Return final date as %Y-%m-%d str. Expression syntax is:
+  expr = <when> <sign> <numb> <unit>
+  when = %Y-%m-%d date str | "today" | "yesterday" | "tomorrow"
+  sign = "+" | "-"
+  numb = integer (0-...)
+  unit = D: "d" | "day" | "days"
+        W: "w" | "wk" | "week" | "weeks"
+        M: "m" | "mon" | "month" | "months"
+        Y: "y" | "yr" | "year" | "years"
+All tokens can be surrounded (or not) by any number of whitespaces.
+Defaults:
+  when = today (local TZ)
+  sign = +
+  numb = 0
+  unit = d
+Thus, $(date) returns today's date (local TZ)
+'''
+
 import re
 import datetime
 import calendar
-
-import lwjs.core.util as util
 
 DAYS = ('d', 'day', 'days')
 WEEK = ('w', 'wk', 'week', 'weeks')
@@ -19,7 +37,7 @@ REXP += r'\s*([0-9]+)?'
 REXP += r'\s*(' + '|'.join(DAYS + WEEK + MNTH + YEAR) + r')?\s*$'
 
 def date(*args) -> str:
-  args = ''.join([util.any2str(arg).lower() for arg in args])
+  args = ''.join([str(arg).lower() for arg in args])
   if not (grps := re.match(REXP, args)):
     raise ValueError(args)
 

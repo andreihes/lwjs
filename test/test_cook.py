@@ -1,6 +1,6 @@
 import pytest
 
-import lwjs.core.cook as cook
+import lwjs
 
 @pytest.mark.parametrize(
   ['v', 't', 'e'],
@@ -11,6 +11,6 @@ import lwjs.core.cook as cook
   ]
 )
 def test_001(v, t, e):
-  r = cook.cook(v)
+  r = lwjs.cook(v)
   assert isinstance(r, t)
   assert r == e
