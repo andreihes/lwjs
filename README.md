@@ -1,29 +1,24 @@
 # lwjs
 **LightWeight JSON Shell** is a package to allow simple inline like-in-bash-shell expressions in your JSON documents. Technically, no limits exist to apply on Python objects as well. See few examples:
 - `"$(calc 5+5)"`\
-  **->** `10`\
-  note the result is `int`, not `str`
+  **->** `10`
+  
 - `"5 + 5 = $(calc 5 + 5)"`\
-  **->** `"5 + 5 = 10"`\
-  now, the result is `str` because everything got concatenated
-- `{ "list": [ null, 1 ], "nvl": "$(nvl ${list.0} ${list.1})" }`\
-  **->** `{ "list": [ null, 1 ], "nvl": 1 }`\
-  here the result is `int`
-- `{ "list": [ null, 1 ], "nvl": "$(nvl ${list.0} '${list.1}')" }`\
-  **->** `{ "list": [ null, 1 ], "nvl": "1" }`\
-  however, we can force it to be `str` using a quoted arg
-- `{ "birth": { "Y": 2022, "M": "Jan", "D": "15" }, "short": "${birth.M} ${birth.D}, ${birth.Y}" }`\
-  **->** `{ "birth": { "Y": 2022, "M": "Jan", "D": "15" }, "short": "Jan 15, 2022" }`\
-  again, everything gets concatenated into `str`
-- `{ "node": { "a": 1, "b": 2 }, "copy": "${node}" }`\
-  **->** `{ "node": { "a": 1, "b": 2 }, "copy": { "a": 1, "b": 2 } }`\
-  no need to concatenate so function's result left as is and it is `dict`
+  **->** `"5 + 5 = 10"`
+  
+- `{ "in": { "v1": 2, "v2": 5 }, "r": "$(calc ${in.v1} + ${in.v2})" }`\
+  **->** `{ "in": { "v1": 2, "v2": 5 }, "r": 7 }`
+  
+- `"$(json $(read ~/data.json))"`\
+  **->** `{ "data": [ 1, 2, 3 ] }`
+  
+NB: `calc`, `json`, `read` are `lwjs`-shipped funs: [calc.py](/lwjs/funs/calc.py), [json.py](/lwjs/funs/json.py), [read.py](/lwjs/funs/read.py)
 
 # installation
-`pip install lwjs`
+Unexpectedly, it is `pip install lwjs`
 
-# code example
-Consider having the below JSON object (which basically maps 1:1 to a Python dictionary). You may find the object stored directly into `text` and parsed into `data`, next cooked into `outs` and printed:
+# example
+Consider having the below JSON object (which basically maps 1:1 to a Python dictionary). You may find the string object definition stored directly into `text` and parsed into `data`, next cooked into `outs` with `lwjs` and printed:
 ```python
 import lwjs
 import json
@@ -35,7 +30,8 @@ text = '''
     "22+20": "$(calc 22 + 20)"
   },
   "adate": "${root.adate}",
-  "22+20": "${root.22+20}"
+  "22+20": "${root.22+20}",
+  "notes": "You only have to escape $$ character"
 }
 '''
 
@@ -56,29 +52,58 @@ Result:
     "22+20": 42
   },
   "adate": "2022-02-28",
-  "22+20": 42
+  "22+20": 42,
+  "notes": "You only have to escape $ character"
 }
 ```
 
-Special `function` expressions here are `$(date 2022-01-31 + 1 month)` and `$(calc 22 + 20)`.\
-Special `substitute` expressions here are `${root.today}` and `${root.22+20}`.
+Special `function` expressions here are `"$(date 2022-01-31 + 1 month)"` and `"$(calc 22 + 20)"`.\
+Special `substitute` expressions here are `"${root.adate}"` and `"${root.22+20}"`
+
+# examples
+Visit [tests](/test) to see more examples
 
 # functions
-**`$(name arg1 arg2 ... argN)`**\
-For a list of functions shipped with `lwjs` refer to `lwjs.core.funs`. Each function is located in a separate file where file name matches the function name. Also, you may "teach" `lwjs` to use custom functions from any other module. This is described in [customization](#customization).\
-Techincally, function name can be quoted and contain whitespaces or quotes. However this is not used by default. You may somehow utilize this when customizing the functions.
-TODO:
-- Quoting
-- Quoted args and not quoted args
-- Basic type conversions
+`$(name arg1 arg2 ... argN)`\
+Name and arguments are separated by any number of whitespaces ` `. The number of spaces is not important and they are not preserved. If spaces are important then they must be quoted. Quotation is done using single-quote character `'`. For example: `$('my fun' 'my arg')`. This will load function with name `"my fun"` and call it passing a single argument `"my arg"`. There are no default functions (shipped with `lwjs`) that may require quoting the name. However, quoting the args may be required. You may also [customize](#customization) function load routine and somehow use function name quotation feature if needed. If you need a quote inside of a quoted name or argument then just double it:
+- `"$(fun x y)"` == `"$(  fun   x   y  )"`\
+  Calls function `fun` with two arguments: `"x"` and `"y"`
+  
+- `"$(fun 'x y')"` == `"$(  fun   'x y'   )"`\
+  Calls function `fun` with one argument: `"x y"`
+  
+- `$(fun Hi, '''BOB''' !)"`\
+  Calls function `fun` with three arguments: `"Hi,"`, `"'BOB'"`, `"!"`
+  
+- `$(fun 'Hi, ''BOB''!')"`\
+  Calls function `fun` with one argument: `"Hi, 'BOB' !"`
+  
+For a list of functions shipped with `lwjs` refer to [lwjs.funs](/lwjs/funs). Each function is located in a separate file where file name matches the function name. Also, you may [customize](#customization) `lwjs` to use any function from any module.
+
+# arguments
+There is a conversion for simple-type **unquoted** arguments (**quoted** arguments are always a string) before calling a function. Take a look at [dump.py](/lwjs/funs/dump.py) which ooutputs a list of args passed and their types and the below list:
+- String `"null"` will be passed as `None`\
+  `"$(dump null 'null')"`\
+  **->** `[ { "NoneType": null }, { "str": "null" } ]`
+  
+- String `"true"` will be passed as `True`\
+  `"$(dump true 'true')"`\
+  **->** `[ { "bool": true }, { "str": "true" } ]`
+  
+- String `"false"` will be passed as `False`\
+  `"$(dump false 'false')"`\
+  **->** `[ { "bool": false }, { "str": "false" } ]`
+  
+- String that looks like an `int` will be passed as `int`\
+  `"$(dump 42 4_2 '42')"`\
+  **->** `[ { "int": 42 }, { "int": 42 }, { "str": "42" } ]`
+  
+- String that looks like a `float` will be passed as `float`\
+  `"$(dump 0.42 .4_2 '.42')"`\
+  **->** `[ { "float": 0.42 }, { "float": 0.42 }, { "str": ".42" } ]`
 
 # substitutes
-**`${key1.key2. ... .keyN}`**\
-Substitute is a `.`-delimited path. Whenever a key contains a `.` you may use single-quote `'` to put it. To put a single-quot inside of quoted substitute's part just double it. Few examples:
-TODO:
-- 1
-- 2
-- 3
+TODO
 
 # customization
 TODO
