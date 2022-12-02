@@ -109,9 +109,9 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
         paq, index = chop_plain(name, line, index, ' )')
     else:
       if curr == "'":
-        paq, index = chop_quote(bone.Pin(), line, index)
+        paq, index = chop_quote(bone.Quo(), line, index)
       else:
-        paq, index = chop_plain(bone.Pin(), line, index, ' )')
+        paq, index = chop_plain(bone.Arg(), line, index, ' )')
       args.append(paq)
 
   # unbalanced fun
