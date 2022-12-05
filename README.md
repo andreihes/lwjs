@@ -131,12 +131,12 @@ Once fun `"$()"` or sub `"${}"` evaluates the result is concatenated into a stri
 See for the default conversions: [help.py#any2str](/lwjs/core/help.py). This can be [customized](#customization)
 
 # customization
-## Customize Function Load
+#### Customize Function Load
 TODO
 
-## Customize Function Argument Conversions
+#### Customize Function Argument Conversions
 TODO
 
-## Customize Result Concatenation Conversions
+#### Customize Result Concatenation Conversions
 TODO
 
