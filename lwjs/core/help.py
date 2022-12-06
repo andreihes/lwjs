@@ -89,11 +89,11 @@ class Aide(Aid):
   def set_func(self, func: FUN[[Aid, str], FUN]) -> None:
     self._func = func
 
-  def set_str2any(self, str2any: FUN[[Aid, None|str], ANY]) -> None:
-    self._str2any = str2any
+  def set_to_any(self, to_any: FUN[[Aid, None|str], ANY]) -> None:
+    self._to_any = to_any
 
-  def set_any2str(self, any2str: FUN[[Aid, None|ANY], str]) -> None:
-    self._any2str = any2str
+  def set_to_str(self, to_str: FUN[[Aid, None|ANY], str]) -> None:
+    self._to_str = to_str
 
 class Bugster(Exception):
   def __init__(self) -> None:
