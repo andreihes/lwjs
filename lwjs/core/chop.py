@@ -142,7 +142,7 @@ def chop_quote(paq: bone.PAQ, line: str, begin: int) -> tuple[bone.PAQ, int]:
       index += 1
 
   # unexpected end of input
-  raise help.BadChop('Unbalanced "\'"', line, begin)
+  raise help.BadChop('Unbalanced quote', line, begin)
 
 def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str) -> tuple[bone.PAQ, int]:
   # begin is on a confirmed non-"'" sequence inside of fun or sub
@@ -162,4 +162,4 @@ def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str) -> tuple[bone.PA
       index += 1
 
   # unexpected end of input
-  raise help.BadChop('Unbalanced "{sep}"', line, begin)
+  raise help.BadChop('Unbalanced plain', line, begin)
