@@ -20,8 +20,8 @@ Unexpectedly, it is `pip install lwjs`
 # example
 Consider having the below JSON object (which basically maps 1:1 to a Python dictionary). You may find the string object definition stored directly into `text` and parsed into `data`, next cooked into `outs` with `lwjs` and printed:
 ```python
-import lwjs
 import json
+import lwjs
 
 text = '''
 {
