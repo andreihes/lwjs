@@ -3,7 +3,7 @@ import re
 def calc(*args) -> int|float:
   args = ''.join([str(arg).lower() for arg in args])
 
-  if not re.match(r'^[0-9\+\-\.\(\)\s]*$', args):
+  if not re.match(r'^[0-9/*%\+\-\.\(\)\s]*$', args):
     raise ValueError(f'Forbidden chars in "{args}"')
 
   try:
