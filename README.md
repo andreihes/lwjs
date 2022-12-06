@@ -132,7 +132,59 @@ See for the default conversions: [help.py#any2str](/lwjs/core/help.py). This can
 
 # customization
 #### Customize Function Load
-TODO
+You may find default logic implemented in [help.py#func](/lwjs/core/help.py). There are two ways to add functions from other modules. First one is use the standart `func` load routine [help.py#func](/lwjs/core/help.py) but with the `Aide` object. Register your functions using `Refs` property. They key is a part before `.` and the function name is a part after the `.`. Example:
+```python
+import json
+import lwjs
+
+# this is a custom function
+# that we want to use further
+def fun():
+  return 'Hello from fun()'
+
+# this is how it will be called
+data = '$(my.fun)'
+
+# default cook brings exception
+# ValueError: Have you registered ref "my"?
+# outs = lwjs.cook(data)
+
+# register module for "my"
+aid = lwjs.Aide()
+aid.Refs['my'] = '__main__'
+
+# cook with aid
+outs = lwjs.cook(data, aid)
+
+# print
+print(json.dumps(outs, indent = 2))
+```
+Another option is to implement your own load routine. For this, you have to define a function that will recevie `name:str` as an argument and parse it on your own. Here is an example where it only can load `json.dumps` or `json.loads`:
+```python
+import json
+import lwjs
+
+# define custom load function
+def func(Aid: lwjs.Aid, name: str) -> lwjs.FUN:
+  if name == 'loads':
+    return json.loads
+  if name == 'dumps':
+    return json.dumps
+  raise ValueError('Unsupported name "${name}"')
+
+# our data
+data = { 'load': '$(loads \'{ "k1": "v1", "k2": "v2" }\')', 'dump': '$(dumps ${load})' }
+
+# register new load
+aid = lwjs.Aide()
+aid.set_func(func)
+
+# cook with aid
+outs = lwjs.cook(data, aid)
+
+# print
+print(json.dumps(outs, indent = 2))
+```
 
 #### Customize Function Argument Conversions
 TODO
