@@ -1,6 +1,8 @@
-import typing
-
 import lwjs.core.cook
+import lwjs.core.help
 
-def cook(data: typing.Any) -> typing.Any:
-  return lwjs.core.cook.cook(data)
+ANY = lwjs.core.help.ANY
+FUN = lwjs.core.help.FUN
+Aid = lwjs.core.help.Aid
+Aide = lwjs.core.help.Aide
+cook = lwjs.core.cook.cook

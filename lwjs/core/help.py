@@ -11,8 +11,8 @@ MAP = typing.MutableMapping
 SEQ = typing.MutableSequence
 
 class Aid:
-  def __init__(self, obj: ANY) -> None:
-    self.Root: ANY = obj
+  def __init__(self) -> None:
+    self.Root: ANY = None
     self.Path: list[str] = [ ]
     self.Hits: dict[int, str] = { }
     self.Refs: dict[str, str] = { }
@@ -24,8 +24,11 @@ def func(aid: Aid, name: str) -> FUN:
     mod = 'lwjs.funs.' + name
     fun = name
   elif len(pair) == 2:
-    mod = aid.Refs[pair[0]]
-    fun = pair[1]
+    if pair[0] in aid.Refs:
+      mod = aid.Refs[pair[0]]
+      fun = pair[1]
+    else:
+      raise ValueError(f'Have you registered ref "{pair[0]}"?')
   else:
     raise ValueError(f'Bad fun ref "{name}"')
   try:
@@ -40,7 +43,7 @@ def func(aid: Aid, name: str) -> FUN:
     raise ValueError(f'Fun ref is not a fun: "{name}"')
   return fun
 
-def str2any(aid: Aid, obj: None|str) -> ANY:
+def to_any(aid: Aid, obj: None|str) -> ANY:
   if obj is None:
     return None
   if re.match(r'^\s*null\s*$', obj, re.IGNORECASE):
@@ -55,7 +58,7 @@ def str2any(aid: Aid, obj: None|str) -> ANY:
     return float(obj)
   return obj
 
-def any2str(aid: Aid, obj: None|ANY) -> str:
+def to_str(aid: Aid, obj: None|ANY) -> str:
   if obj is None:
     return ''
   if isinstance(obj, str):
@@ -67,21 +70,21 @@ def any2str(aid: Aid, obj: None|ANY) -> str:
   return str(obj)
 
 class Aide(Aid):
-  def __init__(self, obj: ANY) -> None:
-    super().__init__(obj)
+  def __init__(self) -> None:
+    super().__init__()
     self._func: FUN[[Aid, str], FUN] = func
-    self._str2any: FUN[[Aid, None|str], ANY] = str2any
-    self._any2str: FUN[[Aid, None|ANY], str] = any2str
+    self._to_any: FUN[[Aid, None|str], ANY] = to_any
+    self._to_str: FUN[[Aid, None|ANY], str] = to_str
 
   @functools.cache
   def func(self, name: str) -> FUN:
     return self._func(self, name)
 
-  def str2any(self, obj: None|str) -> ANY:
-    return self._str2any(self, obj)
+  def to_any(self, obj: None|str) -> ANY:
+    return self._to_any(self, obj)
 
-  def any2str(self, obj: None|ANY) -> str:
-    return self._any2str(self, obj)
+  def to_str(self, obj: None|ANY) -> str:
+    return self._to_str(self, obj)
 
   def set_func(self, func: FUN[[Aid, str], FUN]) -> None:
     self._func = func

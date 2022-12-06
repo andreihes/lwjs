@@ -4,12 +4,11 @@ import lwjs.core.bone as bone
 import lwjs.core.chop as chop
 import lwjs.core.help as help
 
-def cook(obj: help.ANY) -> help.ANY:
-  if isinstance(obj, help.Aide):
-    return cook_deep(obj.Root, obj)
-  else:
-    aid = help.Aide(obj)
-    return cook_deep(obj, aid)
+def cook(obj: help.ANY, aid: help.Aide|None = None) -> help.ANY:
+  if aid is None:
+    aid = help.Aide()
+  aid.Root = obj
+  return cook_deep(obj, aid)
 
 def cook_deep(obj: help.ANY, aid: help.Aide) -> help.ANY:
   if isinstance(obj, str):
@@ -70,12 +69,12 @@ def roast_paq(paq: bone.PAQ, aid: help.Aide) -> help.ANY:
     data = roast_deep(paq[0], aid)
     if isinstance(paq, bone.Arg):
       if isinstance(data, str):
-        data = aid.str2any(data)
+        data = aid.to_any(data)
     return data
   line = ''
   for dot in paq:
     data = roast_deep(dot, aid)
-    line += aid.any2str(data)
+    line += aid.to_str(data)
   return line
 
 def roast_kit(kit: bone.Kit, aid: help.Aide) -> list[help.ANY]:
