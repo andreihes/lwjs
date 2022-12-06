@@ -187,8 +187,55 @@ print(json.dumps(outs, indent = 2))
 ```
 
 #### Customize Function Argument Conversions
-TODO
+Use `lwjs.Aids` instance and set a new `to_any` conversion function. Example:
+```python
+import json
+import lwjs
+
+# define conversion function
+def to_any(aid: lwjs.Aid, obj: None|str) -> lwjs.ANY:
+  if obj == 'HUNDRED':
+    return 100
+  else:
+    return obj
+
+# our data
+data = '$(dump HUNDRED)'
+
+# register new load
+aid = lwjs.Aide()
+aid.set_to_any(to_any)
+
+# cook with aid
+outs = lwjs.cook(data, aid)
+
+# print
+print(json.dumps(outs, indent = 2))
+```
 
 #### Customize Result Concatenation Conversions
-TODO
+Use `lwjs.Aids` instance and set a new `to_str` conversion function. Example:
+```python
+import json
+import lwjs
 
+# define conversion function
+def to_str(aid: lwjs.Aid, obj: None|lwjs.ANY) -> str:
+  if obj is None:
+    return '[NULL VALUE]'
+  else:
+    return str(obj)
+
+# our data
+data = 'Result: $(void)'
+
+# register new load
+aid = lwjs.Aide()
+aid.set_to_str(to_str)
+
+# cook with aid
+outs = lwjs.cook(data, aid)
+
+# print
+print(json.dumps(outs, indent = 2))
+```
