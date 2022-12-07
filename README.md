@@ -24,7 +24,7 @@ Legend:
 - `fun` expression example is `"$(calc)"` or `"$(map)"`
 - `ref` expression example is `"$(@calc)"`
 - `sub` expression example is `"${tasks}"` or `"${in.v1}"` or `"${in.v2}"`
-- `esc` expression example is `$`: whenever you need a `$` you have to pay `$$`
+- `esc` expression example is `$$`: whenever you need a `$` you have to pay `$$`
 
 Output:
 ```
@@ -73,7 +73,7 @@ Whenever arg is quoted it will be passed as `str`, however for unquoted args the
 
 This can be [customized](#customization)
 
-# references
+# references: $(@name)
 Whenever the fun's name is prefixed with `@` char then it will not be called. Instead, the fun will be returned and all the args will be ignored. You may pass this fun to other fun, like `map` or anything:\
 **`'''$(map $(@calc) $(json '["1+1", "5+3"]'))'''` == `[2, 8]`**
 1. `$(json '["1+1", "5+3"]')` will return a list: `[ "1+1", "5+3" ]`
