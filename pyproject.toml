@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "lwjs"
-version = "0.0.1"
+version = "0.1.0"
 authors = [ { name="Andrei Hes", email="andrei.hes@ya.ru" } ]
 description = "LightWeight JSON Shell"
-readme = { file = "README.md", content-type = "text/plain" }
-license = { file = "LICENSE.md", content-type = "text/plain" }
+readme = "README.pypi.md"
+license = "WTFPL"
 requires-python = ">=3.8"
 classifiers = [
   "Programming Language :: Python :: 3",
