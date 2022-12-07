@@ -20,8 +20,8 @@ Unexpectedly, it is `pip install lwjs`
 # example
 Consider having the below JSON object (which basically maps 1:1 to a Python dictionary). You may find the string object definition stored directly into `text` and parsed into `data`, next cooked into `outs` with `lwjs` and printed:
 ```python
-import lwjs
 import json
+import lwjs
 
 text = '''
 {
@@ -175,7 +175,7 @@ def func(Aid: lwjs.Aid, name: str) -> lwjs.FUN:
 # our data
 data = { 'load': '$(loads \'{ "k1": "v1", "k2": "v2" }\')', 'dump': '$(dumps ${load})' }
 
-# register new load
+# register new func
 aid = lwjs.Aide()
 aid.set_func(func)
 
@@ -202,7 +202,7 @@ def to_any(aid: lwjs.Aid, obj: None|str) -> lwjs.ANY:
 # our data
 data = '$(dump HUNDRED)'
 
-# register new load
+# register new to_any
 aid = lwjs.Aide()
 aid.set_to_any(to_any)
 
@@ -229,7 +229,7 @@ def to_str(aid: lwjs.Aid, obj: None|lwjs.ANY) -> str:
 # our data
 data = 'Result: $(void)'
 
-# register new load
+# register new to_str
 aid = lwjs.Aide()
 aid.set_to_str(to_str)
 
