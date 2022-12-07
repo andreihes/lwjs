@@ -18,7 +18,12 @@ class Aid:
     self.Refs: dict[str, str] = { }
     self.Crcs: list[list[str]] = [ ]
 
-def func(aid: Aid, name: str) -> FUN:
+def func(aid: Aid, name: str) -> tuple[bool, FUN]:
+  call = True
+  if name[0] == '@':
+    call = False
+    name = name[1:]
+
   pair = name.split('.')
   if len(pair) == 1:
     mod = 'lwjs.funs.' + name
@@ -41,7 +46,7 @@ def func(aid: Aid, name: str) -> FUN:
     raise ValueError(f'Unknown fun in fun ref: "{name}"') from e
   if not isinstance(fun, FUN):
     raise ValueError(f'Fun ref is not a fun: "{name}"')
-  return fun
+  return call, fun
 
 def to_any(aid: Aid, obj: None|str) -> ANY:
   if obj is None:
@@ -72,12 +77,12 @@ def to_str(aid: Aid, obj: None|ANY) -> str:
 class Aide(Aid):
   def __init__(self) -> None:
     super().__init__()
-    self._func: FUN[[Aid, str], FUN] = func
+    self._func: FUN[[Aid, str], tuple[bool, FUN]] = func
     self._to_any: FUN[[Aid, None|str], ANY] = to_any
     self._to_str: FUN[[Aid, None|ANY], str] = to_str
 
   @functools.cache
-  def func(self, name: str) -> FUN:
+  def func(self, name: str) -> tuple[bool, FUN]:
     return self._func(self, name)
 
   def to_any(self, obj: None|str) -> ANY:
@@ -86,7 +91,7 @@ class Aide(Aid):
   def to_str(self, obj: None|ANY) -> str:
     return self._to_str(self, obj)
 
-  def set_func(self, func: FUN[[Aid, str], FUN]) -> None:
+  def set_func(self, func: FUN[[Aid, str], tuple[bool, FUN]]) -> None:
     self._func = func
 
   def set_to_any(self, to_any: FUN[[Aid, None|str], ANY]) -> None:

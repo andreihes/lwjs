@@ -119,5 +119,8 @@ def roast_sub(sub: bone.Sub, aid: help.Aide) -> help.ANY:
 def roast_fun(fun: bone.Fun, aid: help.Aide) -> help.ANY:
   name = roast_paq(fun.Name, aid)
   args = roast_kit(fun.Args, aid)
-  func = aid.func(name)
-  return func(*args)
+  call, func = aid.func(name)
+  if call:
+    return func(*args)
+  else:
+    return func
