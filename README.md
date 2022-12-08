@@ -74,7 +74,7 @@ Whenever arg is quoted it will be passed as `str`. For complex quoted args [cat]
 |4|str|`^false$`|bool|`False`|
 |5|str|`^[\+\-]?[0-9]+$`|int|`int(obj)`|
 |6|str|`^[\+\-]?([0-9]+\.[0-9]*\|[0-9]*\.[0-9]+)$`|float|`float(obj)`|
-|7|str|Anything else|str|`str(obj)`|
+|7|str|Anything else|str|`obj`|
 
 These conversions can be [customized](#customization)
 
@@ -87,8 +87,8 @@ Cat happens in case the result of fun or sub or ref is not the only one in the s
 |2|str|`any`|str|`obj`|
 |3|bool|`True`|str|`"true"`|
 |4|bool|`False`|str|`"false"`|
-|5|int|`any`|str|`int(obj)`|
-|6|float|`any`|str|`float(obj)`|
+|5|int|`any`|str|`str(obj)`|
+|6|float|`any`|str|`str(obj)`|
 |7|any|`any`|str|`str(obj)`|
 
 These conversions can be [customized](#customization)
