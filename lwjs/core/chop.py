@@ -3,7 +3,7 @@
 import lwjs.core.bone as bone
 import lwjs.core.help as help
 
-def chop(line: str) -> bone.Pin:
+def chop(line: str, df: bool) -> bone.Pin:
   pin = bone.Pin()
   start, index = 0, 0
   while curr := line[index:index + 1]:
@@ -15,7 +15,7 @@ def chop(line: str) -> bone.Pin:
     # only append non-empty raw dots
     if start < index:
       pin.append(bone.Raw(line[start:index]))
-    rsf, index = chop_dlr(line, index)
+    rsf, index = chop_dlr(line, index, df)
     pin.append(rsf)
     start = index
 
@@ -27,26 +27,30 @@ def chop(line: str) -> bone.Pin:
   # finally pin holds AST for the line
   return pin
 
-def chop_dlr(line: str, begin: int) -> tuple[bone.RSF, int]:
+def chop_dlr(line: str, begin: int, df: bool) -> tuple[bone.RSF, int]:
   # begin is on a confirmed '$' sequence
   next = line[begin + 1:begin + 2]
+
+  # '${' is an opening for a sub
+  if next == '{':
+    return chop_sub(line, begin, df)
+
+  # '$(' is an opening for a fun
+  if next == '(':
+    return chop_fun(line, begin, df)
+
+  # no escapes if dollar-friendly
+  if df:
+    return bone.Raw('$'), begin + 1
 
   # '$$' is an escaped raw '$'
   if next == '$':
     return bone.Raw('$'), begin + 2
 
-  # '${' is an opening for a sub
-  if next == '{':
-    return chop_sub(line, begin)
-
-  # '$(' is an opening for a fun
-  if next == '(':
-    return chop_fun(line, begin)
-
   # any other sequence means orphan '$'
   raise help.BadChop('Orphan "$"', line, begin)
 
-def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
+def chop_sub(line: str, begin: int, df: bool) -> tuple[bone.Sub, int]:
   # begin is on a confirmed '${' sequence
   kit, index = bone.Kit(), begin + 2
   while curr := line[index:index + 1]:
@@ -63,9 +67,9 @@ def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
 
     # no '}' and no '.' starts a new pin
     if curr == "'":
-      pin, index = chop_quote(bone.Pin(), line, index)
+      pin, index = chop_quote(bone.Pin(), line, index, df)
     else:
-      pin, index = chop_plain(bone.Pin(), line, index, '.}')
+      pin, index = chop_plain(bone.Pin(), line, index, '.}', df)
 
     # update kit
     kit.append(pin)
@@ -86,7 +90,7 @@ def chop_sub(line: str, begin: int) -> tuple[bone.Sub, int]:
   # unbalanced sub
   raise help.BadChop('Unbalanced "${"', line, begin)
 
-def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
+def chop_fun(line: str, begin: int, df: bool) -> tuple[bone.Fun, int]:
   # begin is on a confirmed '$(' sequence
   name, args, index = bone.Pin(), bone.Kit(), begin + 2
   while curr := line[index:index + 1]:
@@ -104,27 +108,27 @@ def chop_fun(line: str, begin: int) -> tuple[bone.Fun, int]:
     # init name or collect args
     if len(name) == 0:
       if curr == "'":
-        paq, index = chop_quote(name, line, index)
+        paq, index = chop_quote(name, line, index, df)
       else:
-        paq, index = chop_plain(name, line, index, ' )')
+        paq, index = chop_plain(name, line, index, ' )', df)
     else:
       if curr == "'":
-        paq, index = chop_quote(bone.Quo(), line, index)
+        paq, index = chop_quote(bone.Quo(), line, index, df)
       else:
-        paq, index = chop_plain(bone.Arg(), line, index, ' )')
+        paq, index = chop_plain(bone.Arg(), line, index, ' )', df)
       args.append(paq)
 
   # unbalanced fun
   raise help.BadChop('Unbalanced "$("', line, begin)
 
-def chop_quote(paq: bone.PAQ, line: str, begin: int) -> tuple[bone.PAQ, int]:
+def chop_quote(paq: bone.PAQ, line: str, begin: int, df: bool) -> tuple[bone.PAQ, int]:
   # begin is on a confirmed "'" sequence inside of fun or sub
   start = index = begin + 1
   while curr := line[index:index + 1]:
     if curr == '$':
       if start < index:
         paq.append(bone.Raw(line[start:index]))
-      rsf, index = chop_dlr(line, index)
+      rsf, index = chop_dlr(line, index, df)
       paq.append(rsf)
       start = index
     elif curr == "'":
@@ -144,14 +148,14 @@ def chop_quote(paq: bone.PAQ, line: str, begin: int) -> tuple[bone.PAQ, int]:
   # unexpected end of input
   raise help.BadChop('Unbalanced quote', line, begin)
 
-def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str) -> tuple[bone.PAQ, int]:
+def chop_plain(paq: bone.PAQ, line: str, begin: int, seps: str, df: bool) -> tuple[bone.PAQ, int]:
   # begin is on a confirmed non-"'" sequence inside of fun or sub
   start = index = begin
   while curr := line[index:index + 1]:
     if curr == '$':
       if start < index:
         paq.append(bone.Raw(line[start:index]))
-      rsf, index = chop_dlr(line, index)
+      rsf, index = chop_dlr(line, index, df)
       paq.append(rsf)
       start = index
     elif curr in seps:

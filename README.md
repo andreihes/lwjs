@@ -1,241 +1,232 @@
 # lwjs
-**LightWeight JSON Shell** is a package to allow simple inline like-in-bash-shell expressions in your JSON documents. Technically, no limits exist to apply on Python objects as well. See few examples:
-- `"$(calc 5+5)"`\
-  **->** `10`
-  
-- `"5 + 5 = $(calc 5 + 5)"`\
-  **->** `"5 + 5 = 10"`
-  
-- `{ "in": { "v1": 2, "v2": 5 }, "r": "$(calc ${in.v1} + ${in.v2})" }`\
-  **->** `{ "in": { "v1": 2, "v2": 5 }, "r": 7 }`
-  
-- `"$(json $(read ~/data.json))"`\
-  **->** `{ "data": [ 1, 2, 3 ] }`
-  
-NB: `calc`, `json`, `read` are `lwjs`-shipped funs: [calc.py](/lwjs/funs/calc.py), [json.py](/lwjs/funs/json.py), [read.py](/lwjs/funs/read.py)
+**Light Weight JSON Shell** is a package to allow simple inline *"like-in-bash-shell"* expressions in JSON documents. Technically, no limits exist to apply on Python objects as well. It recursively scans any given object and performs evaluation of `fun` and `ref` and `sub` and `esc` expressions.\
+Consider the example:
+```python
+import lwjs
+
+data = "$(calc 5 + 5)"
+data = lwjs.cook(data)
+print(data)
+
+data = { "tasks": [ "1+1", "2+2" ], "solve": "$(map $(@calc) ${tasks})" }
+data = lwjs.cook(data)
+print(data)
+
+data = { "in": { "v1": 2, "v2": 5 }, "r": "$(calc ${in.v1} + ${in.v2})" }
+data = lwjs.cook(data)
+print(data)
+
+data = "Must escape '$$' character"
+data = lwjs.cook(data)
+print(data)
+```
+Legend:
+- `fun` expression example is `"$(calc)"` or `"$(map)"`
+- `ref` expression example is `"$(@calc)"`
+- `sub` expression example is `"${tasks}"` or `"${in.v1}"` or `"${in.v2}"`
+- `esc` expression example is `$$`: whenever you need a `$` you have to pay `$$`
+
+Output:
+```
+10
+{'tasks': ['1+1', '2+2'], 'solve': [2, 4]}
+{'in': {'v1': 2, 'v2': 5}, 'r': 7}
+Must escape '$' character
+```
+NB: `calc` and `map` are `lwjs`-shipped funs: [calc.py](/lwjs/funs/calc.py), [map.py](/lwjs/funs/map.py)
 
 # installation
-Unexpectedly, it is `pip install lwjs`
-
-# example
-Consider having the below JSON object (which basically maps 1:1 to a Python dictionary). You may find the string object definition stored directly into `text` and parsed into `data`, next cooked into `outs` with `lwjs` and printed:
-```python
-import json
-import lwjs
-
-text = '''
-{
-  "root": {
-    "adate": "$(date 2022-01-31 + 1 month)",
-    "22+20": "$(calc 22 + 20)"
-  },
-  "adate": "${root.adate}",
-  "22+20": "${root.22+20}",
-  "notes": "You only have to escape $$ character"
-}
-'''
-
-# parsed object
-data = json.loads(text)
-
-# cooked it
-outs = lwjs.cook(data)
-
-# pretty printed it
-print(json.dumps(outs, indent = 2))
-```
-Result:
-```json
-{
-  "root": {
-    "adate": "2022-02-28",
-    "22+20": 42
-  },
-  "adate": "2022-02-28",
-  "22+20": 42,
-  "notes": "You only have to escape $ character"
-}
+```sh
+pip install lwjs
 ```
 
-Special `function` expressions here are `"$(date 2022-01-31 + 1 month)"` and `"$(calc 22 + 20)"`.\
-Special `substitute` expressions here are `"${root.adate}"` and `"${root.22+20}"`.\
-Special `escape` character here is `$`. Whenever you need a `$` you have to pay two: `$$`
-
-# more examples
+# moar examples
 Visit [tests](/test) to see more examples
 
-# functions
-`$(name arg1 arg2 ... argN)`\
-Name and arguments are separated by any number of whitespaces ` `. Whitespace is **0x20** only, no Unicode tricks. The number of spaces is not important and they are not preserved. If spaces are important then they must be quoted. Quotation is done using single-quote character `'`. For example: `$('my fun' 'my arg')`. This will load function with name `"my fun"` and call it passing a single argument `"my arg"`. There are no default functions (shipped with `lwjs`) that may require quoting the name. However, quoting the args may be required. You may also [customize](#customization) function load routine and somehow use function name quotation feature if needed. If you need a quote inside of a quoted name or argument then just double it:
-- `"$(fun x y)"` == `"$(  fun   x   y  )"`\
-  Calls function `fun` with two arguments: `"x"` and `"y"`
-  
-- `"$(fun 'x y')"` == `"$(  fun   'x y'   )"`\
-  Calls function `fun` with one argument: `"x y"`
-  
-- `"$(fun Hi, '''BOB''' !)"`\
-  Calls function `fun` with three arguments: `"Hi,"`, `"'BOB'"`, `"!"`
-  
-- `"$(fun 'Hi, ''BOB''!')"`\
-  Calls function `fun` with one argument: `"Hi, 'BOB' !"`
-  
-For a list of functions shipped with `lwjs` refer to [lwjs.funs](/lwjs/funs). Each function is located in a separate file where file name matches the function name. Also, you may [customize](#customization) `lwjs` to use any function from any module.
+# fun: $(name arg1 arg2 ... argN)
+Name and args are separated by any number of spaces `" "`. Space is `0x20` only, no Unicode tricks. The number of spaces is not important and they are not preserved. If spaces are important then they must be quoted using `"'"` a single-quote character. Quote has to be doubled if it is required within a quoted arg. If quote is not the first char then there is no need to doulbe it\
+\
+Note the fun load logic can be [customized](#customization)
 
-# arguments
-There is a conversion for simple-type **unquoted** arguments (**quoted** arguments are always a string) before calling a function. Take a look at [dump.py](/lwjs/funs/dump.py) which ooutputs a list of args passed and their types and the below list:
-- String `"null"` will be passed as `None`\
-  `"$(dump null 'null')"`\
-  **->** `[ { "NoneType": null }, { "str": "null" } ]`
-  
-- String `"true"` will be passed as `True`\
-  `"$(dump true 'true')"`\
-  **->** `[ { "bool": true }, { "str": "true" } ]`
-  
-- String `"false"` will be passed as `False`\
-  `"$(dump false 'false')"`\
-  **->** `[ { "bool": false }, { "str": "false" } ]`
-  
-- String that looks like an `int` will be passed as `int`\
-  `"$(dump 42 4_2 '42')"`\
-  **->** `[ { "int": 42 }, { "int": 42 }, { "str": "42" } ]`
-  
-- String that looks like a `float` will be passed as `float`\
-  `"$(dump 0.42 .4_2 '.42')"`\
-  **->** `[ { "float": 0.42 }, { "float": 0.42 }, { "str": ".42" } ]`
-  
-See for the default conversions: [help.py#str2any](/lwjs/core/help.py). This can be [customized](#customization)
+# ref: $(@name)
+Whenever the fun's name is prefixed with `"@"` char then it is a ref. The fun will be returned and all the args will be ignored\
+\
+This behavior can be [customized](#customization)
 
-# substitutes
-`${k1.k2. ... .k3}`\
-Each key navigates the initial object from the root. Integer indexes and string keys are supported. Each key must be separated by a dot `.` character. All the whitespaces are preserved as well, so:
-- `"${key1.key2}"`\
-  -> `"key1"` -> `"key2"`
-- `"${key1 .key2 }"`\
-  -> `"key1 "` -> `"key2 "`
+# sub: ${k1.k2. ... .kN}
+Each key navigates in the initial object from the root. Integer indexes and string keys are supported. Each key or index must be separated by a dot `"."` char. All the spaces are preserved as well thus it is not necessary to quote them, unlike the funs. However, if the key contains a dot `"."` then it must be quoted. When navigating, it is expected to see an `int` for nvigation within lists\
+\
+Note the navigation logic can be [customized](#customization)
 
-etc. So it is not necessary to quote the whitespaces, like in functions. However, if the key contains dot `.` character then it must be quoted. Here are few examples to illustrate:
-- `"${'key1'.'key2'}"` == `"${key1.key2}"`\
-  -> `"key1"` -> `"key2"`
-- `"${'k.ey1'.'k.ey2'}"`\
-  -> `"k.ey1"` -> `"k.ey2"`
-- `"${k'ey1.k'ey2}"` == `"${'k''ey1'.'k''ey2'}"`\
-  -> `"k'ey1"` -> `"k'ey2"`
+# esc: $
+You have to escape `"$"` by doubling it `"$$"`\
+\
+Note this can be [customized](#customization)
 
-# concatenation
-Once fun `"$()"` or sub `"${}"` evaluates the result is concatenated into a string where the fun `"$()"` or the sub `"${}"` is encountered. Conversion of the fun or sub result into a string can be [customized](#customization). However, when the fun or the sub is the only expression within the string then no conversion happens. Compare the examples:
-- `"$(calc 2+2)"`\
-  -> `4` (`int`, not `str`)
-- `"2 + 2 = $(calc 2+2) (usually)"`\
-  -> `"2 + 2 = 4 (usually)"` (result is `str` now)
+# arg
+Whenever arg is quoted it will be passed as `str`. For complex quoted args [cat](#cat) rules apply. Unquoted literal args will be passed following the below conversions:
 
-See for the default conversions: [help.py#any2str](/lwjs/core/help.py). This can be [customized](#customization)
+|Priority|Source Type|Obj `obj` Is...|Target Type|Conversion|
+|--------|-----------|---------------|-----------|----------|
+|1|str|`^$`|NoneType|`None`|
+|2|str|`^null$`|NoneType|`None`|
+|3|str|`^true$`|bool|`True`|
+|4|str|`^false$`|bool|`False`|
+|5|str|`^[\+\-]?[0-9]+$`|int|`int(obj)`|
+|6|str|`^[\+\-]?([0-9]+\.[0-9]*\|[0-9]*\.[0-9]+)$`|float|`float(obj)`|
+|7|str|Anything else|str|`obj`|
+
+These conversions can be [customized](#customization)
+
+# cat
+Cat happens in case the result of fun or sub or ref is not the only one in the string. This is true for args as well (however, quoted args always forced into strings). Any value has to be presented as `str` in this case following the below conversions:
+
+|Priority|Source Type|Obj `obj` Is...|Target Type|Conversion|
+|--------|-----------|---------------|-----------|----------|
+|1|NoneType|`None`|str|`"null"`|
+|2|str|`any`|str|`obj`|
+|3|bool|`True`|str|`"true"`|
+|4|bool|`False`|str|`"false"`|
+|5|int|`any`|str|`str(obj)`|
+|6|float|`any`|str|`str(obj)`|
+|7|any|`any`|str|`str(obj)`|
+
+These conversions can be [customized](#customization)
 
 # customization
-#### Customize Function Load
-You may find default logic implemented in [help.py#func](/lwjs/core/help.py). There are two ways to add functions from other modules. First one is use the standart `func` load routine [help.py#func](/lwjs/core/help.py) but with the `Aide` object. Register your functions using `Refs` property. They key is a part before `.` and the function name is a part after the `.`. Example:
+Any customization involves `cook with aid` technique when you pass `lwjs.Aide` instance along with the data into `lwjs.cook`. This `lwjs.Aide` object may be equipped with multiple cooker parts which are different comparing to they original counterparts. Each original cooker part definition can be seen in [help.py](lwjs/core/help.py) as a function
+
+<details><summary>Fun Load</summary><p>
+
+There are two ways to alter the `fun` load routine and both involve `cook with aid` technique:
+1. `"key"."value"` naming approach
 ```python
-import json
 import lwjs
 
-# this is a custom function
-# that we want to use further
-def fun():
-  return 'Hello from fun()'
-
-# this is how it will be called
-data = '$(my.fun)'
-
-# default cook brings exception
-# ValueError: Have you registered ref "my"?
-# outs = lwjs.cook(data)
-
-# register module for "my"
+# in order to cook with aid you need lwjs.Aide object
 aid = lwjs.Aide()
-aid.Refs['my'] = '__main__'
 
-# cook with aid
-outs = lwjs.cook(data, aid)
+# enrich the Refs with necessary modules
+# do not use "." in keys since default "load"
+# will not be able to handle this properly
+aid.Refs['J'] = 'json'
+aid.Refs['O'] = 'os'
 
-# print
-print(json.dumps(outs, indent = 2))
+# use aid.Refs keys to refer the fun
+data = "$( J.loads '[1, 2, 3]' )"
+
+# cook with aid technique in work
+data = lwjs.cook(data, aid)
+print(data)
+
+# repeat again
+data = "$(O.cpu_count)"
+data = lwjs.cook(data, aid)
+print(data)
 ```
-Another option is to implement your own load routine. For this, you have to define a function that will recevie `name:str` as an argument and parse it on your own. Here is an example where it only can load `json.dumps` or `json.loads`:
+2. Replacing the original `load`
 ```python
-import json
 import lwjs
+import importlib
 
-# define custom load function
-def func(Aid: lwjs.Aid, name: str) -> lwjs.FUN:
-  if name == 'loads':
-    return json.loads
-  if name == 'dumps':
-    return json.dumps
-  raise ValueError('Unsupported name "${name}"')
+# define sample static method in a sample class
+# we want to allow lwjs to call the static methods
+class Helper:
+  @staticmethod
+  def fun(arg: str) -> str:
+    return f'I am Helper.fun("{arg}")'
 
-# our data
-data = { 'load': '$(loads \'{ "k1": "v1", "k2": "v2" }\')', 'dump': '$(dumps ${load})' }
+# custom load implementation follows this signature
+# note the first argument: it is lwjs.Aid (not Aide)
+def my_load(aid: lwjs.Aid, name: str) -> tuple[bool, lwjs.FUN]:
+  tokens = name.rsplit('.', 3)
+  if len(tokens) != 3:
+    raise ValueError('Bad class method reference for fun')
+  module = importlib.import_module(tokens[0])
+  classo = getattr(module, tokens[1])
+  method = getattr(classo, tokens[2])
+  return True, method
 
-# register new func
+# in order to cook with aid you need lwjs.Aide object
 aid = lwjs.Aide()
-aid.set_func(func)
 
-# cook with aid
-outs = lwjs.cook(data, aid)
+# replace original load function with a custom implementation
+aid.set_load(my_load)
 
-# print
-print(json.dumps(outs, indent = 2))
+data = '$(__main__.Helper.fun hello)'
+
+# cook with aid technique in work
+data = lwjs.cook(data, aid)
+print(data)
 ```
 
-#### Customize Function Argument Conversions
-Use `lwjs.Aids` instance and set a new `to_any` conversion function. Example:
+</p></details>
+
+<details><summary>Ref Detection</summary><p>
+ 
+In order to change the `ref` detection logic it is necessary to redefine the original `load` routine (like shown in `Fun Load` customization). It is possible to implement any `ref` detection logic (including disabling the `ref` detection). The only requirement for `load` is to return `tuple[True, fun]` when `fun` is detected (so this will be called and all the args will be passed) and return `tuple[False, fun]` when this is a `ref` and it should not be called
+
+</p></details>
+
+<details><summary>Sub Navigation</summary><p>
+
+Same `cook with aid` technique allows to redefine `nget` and `nset` operations in the `lwjs.Aide` and implement any navigation logic
+
+</p></details>
+
+<details><summary>Esc Escaping</summary><p>
+
+This will disable the requirement to escape `"$"` char. However, in this case you won't be able to process strings like `"$("` or `"${"` since they will be always considered as `fun` or `sub` start. To disable `"$"` escapes use `cook with aid` technique:
 ```python
-import json
 import lwjs
 
-# define conversion function
-def to_any(aid: lwjs.Aid, obj: None|str) -> lwjs.ANY:
+data = "This is $1"
+aid = lwjs.Aide()
+# set dollar-friendly propery
+aid.Dofr = True
+# and cook with aid
+data = lwjs.cook(data, aid)
+print(data)
+```
+
+</p></details>
+
+<details><summary>Arg Conversions</summary><p>
+
+```python
+import lwjs
+
+# define custom converter
+def to_any(aid: lwjs.Aid, obj: str) -> lwjs.ANY:
   if obj == 'HUNDRED':
     return 100
   else:
     return obj
 
-# our data
-data = '$(dump HUNDRED)'
-
-# register new to_any
+data = "$(dump HUNDRED)"
 aid = lwjs.Aide()
 aid.set_to_any(to_any)
-
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
+data = lwjs.cook(data, aid)
+print(data)
 ```
 
-#### Customize Result Concatenation Conversions
-Use `lwjs.Aids` instance and set a new `to_str` conversion function. Example:
+</p></details>
+
+<details><summary>Cat Conversions</summary><p>
+
 ```python
-import json
 import lwjs
 
-# define conversion function
-def to_str(aid: lwjs.Aid, obj: None|lwjs.ANY) -> str:
-  if obj is None:
-    return '[NULL VALUE]'
-  else:
-    return str(obj)
+# define custom converter
+# not a very useful one
+def to_str(aid: lwjs.Aid, obj: lwjs.ANY) -> str:
+  return type(obj).__name__
 
-# our data
-data = 'Result: $(void)'
-
-# register new to_str
+data = "$(void) hello $(void)"
 aid = lwjs.Aide()
 aid.set_to_str(to_str)
-
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
+data = lwjs.cook(data, aid)
+print(data)
 ```
+
+</p></details>

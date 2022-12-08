@@ -1,3 +1,4 @@
+import lwjs.core.chop
 import lwjs.core.cook
 import lwjs.core.help
 

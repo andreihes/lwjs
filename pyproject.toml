@@ -9,7 +9,7 @@ authors = [ { name="Andrei Hes", email="andrei.hes@ya.ru" } ]
 description = "LightWeight JSON Shell"
 readme = "README.pypi.md"
 license = "WTFPL"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent"
