@@ -46,7 +46,7 @@ def cook_seq(obj: help.SEQ, aid: help.Aide) -> help.SEQ:
 
 def roast(obj: str, aid: help.Aide) -> help.ANY:
   try:
-    pin = chop.chop(obj)
+    pin = chop.chop(obj, aid.Dofr)
   except Exception as e:
     raise help.BadCook('Unroastable', aid.Path, obj) from e
   return roast_deep(pin, aid)
@@ -90,36 +90,22 @@ def roast_sub(sub: bone.Sub, aid: help.Aide) -> help.ANY:
     raise help.BadCook('Circular ref', aid.Path, f'${{{".".join(path)}}}')
   aid.Crcs.append(path)
   for idx, key in enumerate(path):
-    # check if we can navigate
-    if isinstance(here, help.SEQ):
-      try:
-        key = int(key)
-      except Exception as e:
-        msg = f'Expected "int" at sub[{idx}]. Got "{key}"'
-        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}') from e
-      if key < 0 or key >= len(here):
-        msg = f'Index "{key}" at sub[{idx}] is out of bounds'
-        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
-    elif isinstance(here, help.MAP):
-      if key not in here:
-        msg = f'Missing key "{key}" at sub[{idx}]'
-        raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
-    else:
-      msg = f'Bad type "{type(here).__name__}" at sub[{idx}]'
-      raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}')
-    # navigate
-    val = here[key]
+    try:
+      val = aid.nget(here, key)
+    except Exception as e:
+      msg = f'Sub error on index "{idx}", key "{key}"'
+      raise help.BadCook(msg, aid.Path, f'${{{".".join(path)}}}') from e
     if isinstance(val, str):
       val = cook_str(val, aid)
-      here[key] = val
-    here = here[key]
+      aid.nset(here, key, val)
+    here =  aid.nget(here, key)
   aid.Crcs.pop()
   return here
 
 def roast_fun(fun: bone.Fun, aid: help.Aide) -> help.ANY:
   name = roast_paq(fun.Name, aid)
   args = roast_kit(fun.Args, aid)
-  call, func = aid.func(name)
+  call, func = aid.load(name)
   if call:
     return func(*args)
   else:

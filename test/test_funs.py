@@ -3,6 +3,22 @@ import pytest
 import lwjs.core.cook as cook
 
 @pytest.mark.parametrize(
+['d', 'r'],
+[
+  ("$(calc 1+11)", 12),
+  ("$(calc 1 + 11)", 12),
+  ("$(calc 1 + 11  )", 12),
+  ("$(  calc 1 + 11  )", 12),
+  ("$(calc 2*2)", 4),
+  ("$(calc 2/2)", 1),
+  ("$(calc '(2 + 2) * 2')", 8),
+  ("$(calc 2 + 2 * 2)", 6)
+])
+def test_calc(d, r):
+  v = cook.cook(d)
+  assert v == r
+
+@pytest.mark.parametrize(
   ['d', 'r'],
   [
     ('', None),
