@@ -35,13 +35,13 @@ Must escape '$' character
 ```
 NB: `calc` and `map` are `lwjs`-shipped funs: [calc.py](/lwjs/funs/calc.py), [map.py](/lwjs/funs/map.py)
 
-# moar
-Visit [tests](/test) to see more examples
-
 # installation
 ```sh
 pip install lwjs
 ```
+
+# moar examples
+Visit [tests](/test) to see more examples
 
 # fun: $(name arg1 arg2 ... argN)
 Name and args are separated by any number of spaces `" "`. Space is `0x20` only, no Unicode tricks. The number of spaces is not important and they are not preserved. If spaces are important then they must be quoted using `"'"` a single-quote character. Quote has to be doubled if it is required within a quoted arg. If quote is not the first char then there is no need to doulbe it\
