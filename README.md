@@ -95,7 +95,12 @@ These conversions can be [customized](#customization)
 
 # customization
 <details><summary>Fun Load</summary>
-TODO
+<p>
+  ```python
+  import abc
+  ```
+  You may find original `load` implementation in [help.py#load](lwjs/core/help.py)
+</p>
 </details>
 
 <details><summary>Ref Detection</summary>
