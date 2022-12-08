@@ -43,168 +43,77 @@ Visit [tests](/test) to see more examples
 pip install lwjs
 ```
 
-# functions: $(name arg1 arg2 ... argN)
-Name and args are separated by any number of spaces `" "`. Space is `0x20` only, no Unicode tricks. The number of spaces is not important and they are not preserved:\
-**`"$(f x y)"` == `"$(  f   x   y  )"` == `call fun "f" with 2 args: "x" and "y"`**\
+# fun: $(name arg1 arg2 ... argN)
+Name and args are separated by any number of spaces `" "`. Space is `0x20` only, no Unicode tricks. The number of spaces is not important and they are not preserved. If spaces are important then they must be quoted using `"'"` a single-quote character. Quote has to be doubled if it is required within a quoted arg. If quote is not the first char then there is no need to doulbe it\
 \
-If spaces are important then they must be quoted using `"'"` a single-quote character:\
-**`"$(f 'x y')"` == `"$('f' 'x y')"` == `call fun "f" with 1 arg: "x y"`**\
+Note the fun load logic can be [customized](#customization)
+
+# ref: $(@name)
+Whenever the fun's name is prefixed with `"@"` char then it is a ref. The fun will be returned and all the args will be ignored\
 \
-Quote has to be doubled if it is required within a quoted arg:\
-**`"$(fun 'x''y')"` == `call "fun" with 1 arg: "x'y"`**\
+This behavior can be [customized](#customization)
+
+# sub: ${k1.k2. ... .kN}
+Each key navigates in the initial object from the root. Integer indexes and string keys are supported. Each key or index must be separated by a dot `"."` char. All the spaces are preserved as well thus it is not necessary to quote them, unlike the funs. However, if the key contains a dot `"."` then it must be quoted. When navigating, it is expected to see an `int` for nvigation within lists\
 \
-If quote is not the first char then there is no need to doulbe it:\
-**`"$(fun x''y)"` == `call "fun" with 1 arg: "x''y"`**\
+Note the navigation logic can be [customized](#customization)
+
+# esc: $
+You have to escape `"$"` by doubling it `"$$"`\
 \
+Note this can be [customized](#customization)
 
-This can be [customized](#customization)
+# arg
+Whenever arg is quoted it will be passed as `str`. For complex quoted args [cat](#cat) rules apply. Unquoted literal args will be passed following the below conversions:
 
-# arguments
-Whenever arg is quoted it will be passed as `str`, however for unquoted args there is a primitive-type conversion:
+|Priority|Source Type|Obj `obj` Is...|Target Type|Conversion|
+|--------|-----------|---------------|-----------|----------|
+|1|str|`^$`|NoneType|`None`|
+|2|str|`^null$`|NoneType|`None`|
+|3|str|`^true$`|bool|`True`|
+|4|str|`^false$`|bool|`False`|
+|5|str|`^[\+\-]?[0-9]+$`|int|`int(obj)`|
+|6|str|`^[\+\-]?([0-9]+\.[0-9]*\|[0-9]*\.[0-9]+)$`|float|`float(obj)`|
+|7|str|Anything else|str|`str(obj)`|
 
-|Priority|Unquoted Arg Is...|Conversion Type|Conversion Logic|
-|--------|------------------|---------------|----------------|
-|1|`None`|NoneType|Hardcoded `None`|
-|2|`^\s*null\s*$`|NoneType|Hardcoded `None`|
-|3|`^\s*true\s*$`|bool|Hardcoded `True`|
-|4|`^\s*false\s*$`|bool|Hardcoded `False`|
-|5|`^\s*[+\-]?[0-9_]+\s*$`|int|`int(arg)`|
-|6|`^\s*[+\-]?([0-9_]+\.[0-9_]*\|[0-9_]*\.[0-9_]+)\s*$`|float|`float(arg)`|
+These conversions can be [customized](#customization)
 
-This can be [customized](#customization)
+# cat
+Cat happens in case the result of fun or sub or ref is not the only one in the string. This is true for args as well (however, quoted args always forced into strings). Any value has to be presented as `str` in this case following the below conversions:
 
-# references: $(@name)
-Whenever the fun's name is prefixed with `@` char then it will not be called. Instead, the fun will be returned and all the args will be ignored. You may pass this fun to other fun, like `map` or anything:\
-**`'''$(map $(@calc) $(json '["1+1", "5+3"]'))'''` == `[2, 8]`**
-1. `$(json '["1+1", "5+3"]')` will return a list: `[ "1+1", "5+3" ]`
-2. `$(@calc)` will return `calc` ref (callable)
-3. `$(map ... ...)` will apply `calc` to every list's item
+|Priority|Source Type|Obj `obj` Is...|Target Type|Conversion|
+|--------|-----------|---------------|-----------|----------|
+|1|NoneType|`None`|str|`"null"`|
+|2|str|`any`|str|`obj`|
+|3|bool|`True`|str|`"true"`|
+|4|bool|`False`|str|`"false"`|
+|5|int|`any`|str|`int(obj)`|
+|6|float|`any`|str|`float(obj)`|
+|7|any|`any`|str|`str(obj)`|
 
-This can be [customized](#customization)
-
-# substitutes: ${k1.k2. ... .kN}
-Each key navigates in the initial object from the root. Integer indexes and string keys are supported. Each key must be separated by a dot `.` character. All the spaces are preserved as well thus it is not necessary to quote them, unlike the funs:\
-**`"${'key 1'.'key 2'}"` == `"${key 1.key 2}"` == `root -> "key 1" -> "key 2"`**\
-\
-However, if the key contains a dot `.` then it must be quoted:\
-**`"${'k.ey1'.'k.ey2'}"` == `root -> "k.ey1" -> "k.ey2"`**
-
-# concatenation
-Whenever fun or sub
-Once fun `"$()"` or sub `"${}"` evaluates the result is concatenated into a string where the fun `"$()"` or the sub `"${}"` is encountered. Conversion of the fun or sub result into a string can be [customized](#customization). However, when the fun or the sub is the only expression within the string then no conversion happens. Compare the examples:
-- `"$(calc 2+2)"`\
-  -> `4` (`int`, not `str`)
-- `"2 + 2 = $(calc 2+2) (usually)"`\
-  -> `"2 + 2 = 4 (usually)"` (result is `str` now)
-
-See for the default conversions: [help.py#any2str](/lwjs/core/help.py). This can be [customized](#customization)
+These conversions can be [customized](#customization)
 
 # customization
-#### Customize Function Load
-You may find default logic implemented in [help.py#func](/lwjs/core/help.py). There are two ways to add functions from other modules. First one is use the standart `func` load routine [help.py#func](/lwjs/core/help.py) but with the `Aide` object. Register your functions using `Refs` property. They key is a part before `.` and the function name is a part after the `.`. Example:
-```python
-import json
-import lwjs
+<details><summary>Fun Load</summary>
+TODO
+</details>
 
-# this is a custom function
-# that we want to use further
-def fun():
-  return 'Hello from fun()'
+<details><summary>Ref Detection</summary>
+TODO
+</details>
 
-# this is how it will be called
-data = '$(my.fun)'
+<details><summary>Sub Navigation</summary>
+TODO
+</details>
 
-# default cook brings exception
-# ValueError: Have you registered ref "my"?
-# outs = lwjs.cook(data)
+<details><summary>Esc Escaping</summary>
+TODO
+</details>
 
-# register module for "my"
-aid = lwjs.Aide()
-aid.Refs['my'] = '__main__'
+<details><summary>Arg Conversions</summary>
+TODO
+</details>
 
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
-```
-Another option is to implement your own load routine. For this, you have to define a function that will recevie `name:str` as an argument and parse it on your own. Here is an example where it only can load `json.dumps` or `json.loads`:
-```python
-import json
-import lwjs
-
-# define custom load function
-def func(Aid: lwjs.Aid, name: str) -> lwjs.FUN:
-  if name == 'loads':
-    return json.loads
-  if name == 'dumps':
-    return json.dumps
-  raise ValueError('Unsupported name "${name}"')
-
-# our data
-data = { 'load': '$(loads \'{ "k1": "v1", "k2": "v2" }\')', 'dump': '$(dumps ${load})' }
-
-# register new func
-aid = lwjs.Aide()
-aid.set_func(func)
-
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
-```
-
-#### Customize Function Argument Conversions
-Use `lwjs.Aids` instance and set a new `to_any` conversion function. Example:
-```python
-import json
-import lwjs
-
-# define conversion function
-def to_any(aid: lwjs.Aid, obj: None|str) -> lwjs.ANY:
-  if obj == 'HUNDRED':
-    return 100
-  else:
-    return obj
-
-# our data
-data = '$(dump HUNDRED)'
-
-# register new to_any
-aid = lwjs.Aide()
-aid.set_to_any(to_any)
-
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
-```
-
-#### Customize Result Concatenation Conversions
-Use `lwjs.Aids` instance and set a new `to_str` conversion function. Example:
-```python
-import json
-import lwjs
-
-# define conversion function
-def to_str(aid: lwjs.Aid, obj: None|lwjs.ANY) -> str:
-  if obj is None:
-    return '[NULL VALUE]'
-  else:
-    return str(obj)
-
-# our data
-data = 'Result: $(void)'
-
-# register new to_str
-aid = lwjs.Aide()
-aid.set_to_str(to_str)
-
-# cook with aid
-outs = lwjs.cook(data, aid)
-
-# print
-print(json.dumps(outs, indent = 2))
-```
+<details><summary>Cat Conversions</summary>
+TODO
+</details>
