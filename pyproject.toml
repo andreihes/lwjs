@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "lwjs"
 version = "0.9.1"
 authors = [ { name="Andrei Hes", email="andrei.hes@ya.ru" } ]
-description = "LightWeight JSON Shell"
+description = "Light Weight JSON Shell"
 readme = "README.pypi.md"
 license = "WTFPL"
 requires-python = ">=3.10"
