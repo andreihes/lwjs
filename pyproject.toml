@@ -1,3 +1,13 @@
+#
+# TODO: automate
+# - DO: up the version in toml
+# - DO: commit, merge PR
+# - GIT: publish new release manually
+# - RUN: rm ./dist/*
+# - RUN: python -m build
+# - RUN: python -m twine upload dist/*
+#
+
 [build-system]
 requires = [ "hatchling" ]
 build-backend = "hatchling.build"
