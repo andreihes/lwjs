@@ -59,9 +59,7 @@ Each key navigates in the initial object from the root. Integer indexes and stri
 Note the navigation logic can be [customized](#customization)
 
 # esc: $
-You have to escape `"$"` by doubling it `"$$"`\
-\
-Note this can be [customized](#customization)
+You have to escape `"$"` by doubling it `"$$"`
 
 # arg
 Whenever arg is quoted it will be passed as `str`. For complex quoted args [cat](#cat) rules apply. Unquoted literal args will be passed following the below conversions:
@@ -171,23 +169,6 @@ In order to change the `ref` detection logic it is necessary to redefine the ori
 <details><summary>Sub Navigation</summary><p>
 
 Same `cook with aid` technique allows to redefine `nget` and `nset` operations in the `lwjs.Aide` and implement any navigation logic
-
-</p></details>
-
-<details><summary>Esc Escaping</summary><p>
-
-This will disable the requirement to escape `"$"` char. However, in this case you won't be able to process strings like `"$("` or `"${"` since they will be always considered as `fun` or `sub` start. To disable `"$"` escapes use `cook with aid` technique:
-```python
-import lwjs
-
-data = "This is $1"
-aid = lwjs.Aide()
-# set dollar-friendly propery
-aid.Dofr = True
-# and cook with aid
-data = lwjs.cook(data, aid)
-print(data)
-```
 
 </p></details>
 

@@ -5,7 +5,7 @@ import lwjs.core.bone as bone
 import lwjs.core.help as help
 
 def test_empty():
-  pins = chop.chop('', False)
+  pins = chop.chop('')
   assert len(pins) == 1
   raw = pins[0]
   assert isinstance(raw, bone.Raw)
@@ -14,7 +14,7 @@ def test_empty():
 @pytest.mark.parametrize('line', ['$$', '$$abc', 'abc$$', 'a$$$$b', 'abc $$$$$$ xyz'])
 def test_pass_raws(line):
   outs = ''
-  pins = chop.chop(line, False)
+  pins = chop.chop(line)
   for pin in pins:
     assert isinstance(pin, bone.Raw)
     outs += pin.Raw.replace('$', '$$')
@@ -24,7 +24,7 @@ def test_pass_raws(line):
 @pytest.mark.parametrize('line', ['$', '$abc', 'abc$', 'a$$$b', 'abc $$$$$ xyz'])
 def test_fail_raws(line):
   outs = ''
-  pins = chop.chop(line, False)
+  pins = chop.chop(line)
   for pin in pins:
     assert isinstance(pin, bone.Raw)
     outs += pin.Raw.replace('$', '$$')

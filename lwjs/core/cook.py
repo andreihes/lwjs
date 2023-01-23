@@ -46,7 +46,7 @@ def cook_seq(obj: help.SEQ, aid: help.Aide) -> help.SEQ:
 
 def roast(obj: str, aid: help.Aide) -> help.ANY:
   try:
-    pin = chop.chop(obj, aid.Dofr)
+    pin = chop.chop(obj)
   except Exception as e:
     raise help.BadCook('Unroastable', aid.Path, obj) from e
   return roast_deep(pin, aid)
