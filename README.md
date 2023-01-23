@@ -59,9 +59,7 @@ Each key navigates in the initial object from the root. Integer indexes and stri
 Note the navigation logic can be [customized](#customization)
 
 # esc: $
-You have to escape `"$"` by doubling it `"$$"`\
-\
-Note this can be [customized](#customization)
+You have to escape `"$"` by doubling it `"$$"`
 
 # arg
 Whenever arg is quoted it will be passed as `str`. For complex quoted args [cat](#cat) rules apply. Unquoted literal args will be passed following the below conversions:
@@ -140,11 +138,11 @@ class Helper:
 # note the first argument: it is lwjs.Aid (not Aide)
 def my_load(aid: lwjs.Aid, name: str) -> tuple[bool, lwjs.FUN]:
   tokens = name.rsplit('.', 3)
-  if len(tokens) != 3:
+  if len(tokens) < 3:
     raise ValueError('Bad class method reference for fun')
-  module = importlib.import_module(tokens[0])
-  classo = getattr(module, tokens[1])
-  method = getattr(classo, tokens[2])
+  module = importlib.import_module('.'.join(tokens[:-2]))
+  classo = getattr(module, tokens[-2])
+  method = getattr(classo, tokens[-1])
   return True, method
 
 # in order to cook with aid you need lwjs.Aide object
@@ -153,7 +151,9 @@ aid = lwjs.Aide()
 # replace original load function with a custom implementation
 aid.set_load(my_load)
 
-data = '$(__main__.Helper.fun hello)'
+# using name to refer Helper class module
+# use other name for classes in other modules
+data = f'$({__name__}.Helper.fun hello)'
 
 # cook with aid technique in work
 data = lwjs.cook(data, aid)
@@ -171,23 +171,6 @@ In order to change the `ref` detection logic it is necessary to redefine the ori
 <details><summary>Sub Navigation</summary><p>
 
 Same `cook with aid` technique allows to redefine `nget` and `nset` operations in the `lwjs.Aide` and implement any navigation logic
-
-</p></details>
-
-<details><summary>Esc Escaping</summary><p>
-
-This will disable the requirement to escape `"$"` char. However, in this case you won't be able to process strings like `"$("` or `"${"` since they will be always considered as `fun` or `sub` start. To disable `"$"` escapes use `cook with aid` technique:
-```python
-import lwjs
-
-data = "This is $1"
-aid = lwjs.Aide()
-# set dollar-friendly propery
-aid.Dofr = True
-# and cook with aid
-data = lwjs.cook(data, aid)
-print(data)
-```
 
 </p></details>
 

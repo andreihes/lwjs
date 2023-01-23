@@ -13,7 +13,6 @@ SEQ = typing.MutableSequence
 class Aid:
   def __init__(self) -> None:
     self.Root: ANY = None
-    self.Dofr: bool = False
     self.Path: list[str] = [ ]
     self.Hits: dict[int, str] = { }
     self.Refs: dict[str, str] = { }
@@ -21,11 +20,9 @@ class Aid:
 
 def load(aid: Aid, name: str) -> tuple[bool, FUN]:
   call = True
-  if name[0] != '@':
-    pair = name.split('.')
-  else:
+  if name[0] == '@':
     call = False
-    pair = name[1:].split('.')
+    name = name[1:]
 
   pair = name.split('.')
   if len(pair) == 1:

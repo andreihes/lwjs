@@ -22,6 +22,8 @@ import re
 import datetime
 import calendar
 
+import lwjs.core.help as help
+
 DAYS = ('d', 'day', 'days')
 WEEK = ('w', 'wk', 'week', 'weeks')
 MNTH = ('m', 'mon', 'month', 'months')
@@ -86,5 +88,7 @@ def date(*args) -> str:
     m = when.month
     d = min(when.day, calendar.monthrange(y, m)[1])
     when = datetime.datetime(y, m ,d)
+  else:
+    raise help.Bugster()
 
   return when.strftime('%Y-%m-%d')
