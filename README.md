@@ -138,11 +138,11 @@ class Helper:
 # note the first argument: it is lwjs.Aid (not Aide)
 def my_load(aid: lwjs.Aid, name: str) -> tuple[bool, lwjs.FUN]:
   tokens = name.rsplit('.', 3)
-  if len(tokens) != 3:
+  if len(tokens) < 3:
     raise ValueError('Bad class method reference for fun')
-  module = importlib.import_module(tokens[0])
-  classo = getattr(module, tokens[1])
-  method = getattr(classo, tokens[2])
+  module = importlib.import_module('.'.join(tokens[:-2]))
+  classo = getattr(module, tokens[-2])
+  method = getattr(classo, tokens[-1])
   return True, method
 
 # in order to cook with aid you need lwjs.Aide object
@@ -151,7 +151,9 @@ aid = lwjs.Aide()
 # replace original load function with a custom implementation
 aid.set_load(my_load)
 
-data = '$(__main__.Helper.fun hello)'
+# using name to refer Helper class module
+# use other name for classes in other modules
+data = f'$({__name__}.Helper.fun hello)'
 
 # cook with aid technique in work
 data = lwjs.cook(data, aid)
