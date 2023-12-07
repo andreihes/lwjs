@@ -1,0 +1,109 @@
+//
+// ssjs root is always a dict
+//
+{
+  //
+  // ssjs starts with a key to define ssjs kind (ssjs kind is like a json type)
+  // for the root object or value; ssjs kind format character by character:
+  //
+  // 1. Miss Flag
+  //    one character which is one of:
+  //    '!' - value must be presented
+  //    '?' - value can be omitted
+  //    '@' - value can be omitted or presented
+  //          however: omitted will be replaced with some default value
+  //
+  // 2. Null Flag
+  //    one character which is:
+  //    '!' - no null value allowed
+  //    '?' - both null and non-null are fine
+  //    '@' - both null and non-null are fine
+  //          however: null will be replaced with some default value
+  //
+  // 3. Next there is a separator char '-'
+  //    just a single '-'
+  //    no alternate values allowed
+  //
+  // 4. Kind (ssjs kind) name
+  //    string / key of the ssjs kind function which ensures
+  //    and validates the value; new (custom) kind can be added into ssjs
+  //    following the 'registering new ssjs kinds' routine; a number of
+  //    embedded ssjs kinds available in ssjs.kind package
+  //
+  // below: defining mandatory (first '!') non-null (second '!') value and
+  // ssjs kind for it is 'dict' which maps to json dict; this value is a must
+  // thus empty json will be rejected; this value cannot be null thus 'null'
+  // value will be rejected; this value must be '{ }' and the contents of the
+  // dictionary defined by the arguments for the 'dict' kind
+  //
+  "!!-dict":
+  {
+    //
+    // 'hint' is just a piece of text describing the data for humanst
+    // it is optional
+    //
+    "hint": "main.json dict data",
+
+    //
+    // 'miss' is a default value to apply when data is missing
+    // since we specify value as mandatory (first '!') we are not going to
+    // apply any defaults if it is missing and 'miss' must be omitted
+    //
+    // "miss": { },
+    //
+
+    //
+    // 'null' is a default value to apply when data is null
+    // since we specify value as non-null (second '!') we are not going to
+    // apply any defaults if it is null and 'null' must be omitted
+    //
+    // "null": { },
+    //
+
+    //
+    // 'args' is arguments specification for the choosed ssjs kind; in this
+    // case we must refer to 'dict' ssjs kind to specify the proper arguments
+    // note it may be mandatory or optional and depends on the specific kind
+    //
+    // ssjs 'dict' kind allows to specify the ssjs for the keys:
+    // 1. Describe requirements for some specific keys
+    // 2. Specify if any more keys are allowed or not
+    // 3. Specify unified ssjs for additional keys
+    //
+    "args":
+    {
+      //
+      // we expect root 'dict' to contain two keys: 'name' and 'date'
+      //
+      "keys":
+      {
+        "name":
+        {
+          "!!-rexp":
+          {
+            "hint": "some name and it must match ^[a-z]+$",
+            "args": "^[a-z]+$"
+          }
+        },
+        "date":
+        {
+          "!!-date":
+          {
+            "hint": "some date and it is expected to be %Y-%m-%d string",
+            "args":
+            {
+              "min": "2000-01-01",
+              "max": "2100-01-01"
+            }
+          }
+        }
+      },
+
+      //
+      // and no other keys (except 'name' and 'date') are allowed
+      // in this case 
+      //
+      "more": false
+    }
+  }
+}
